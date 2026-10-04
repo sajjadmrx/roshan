@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/roshan", "crates/roshan-core", "crates/roshan-platform"]
 
 [workspace.package]
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/sajjadmrx/roshan"
