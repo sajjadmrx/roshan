@@ -268,13 +268,14 @@ unsafe fn bitmap_pixels(bitmap: HBITMAP) -> Option<(u32, u32, Vec<u8>)> {
 
 /// Converts the shell's BGRA (usually premultiplied) into straight RGBA.
 fn bgra_to_rgba(pixels: &mut [u8]) {
-    let has_alpha = pixels.chunks_exact(4).any(|p| p[3] != 0);
+    let (px, _) = pixels.as_chunks::<4>();
+    let has_alpha = px.iter().any(|p| p[3] != 0);
     // Premultiplied data never has a color channel above its alpha.
     let premultiplied = has_alpha
-        && pixels
-            .chunks_exact(4)
+        && px
+            .iter()
             .all(|p| p[0] <= p[3] && p[1] <= p[3] && p[2] <= p[3]);
-    for p in pixels.chunks_exact_mut(4) {
+    for p in pixels.as_chunks_mut::<4>().0 {
         p.swap(0, 2);
         if !has_alpha {
             p[3] = 255;

@@ -17,6 +17,5 @@ toml = "0.9"
 
 [build-dependencies]
 image = { version = "0.25", default-features = false, features = ["png", "ico"] }
-
-[target.'cfg(windows)'.build-dependencies]
+# Only used when the target is Windows, but build.rs must compile on every host.
 embed-resource = "3"
