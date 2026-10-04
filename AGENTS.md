@@ -23,8 +23,8 @@ platform or tracker. Reject features that push it in those directions.
   from the OS at runtime. Test fixtures stay inside `#[cfg(test)]`.
 - **Private.** No accounts, telemetry or analytics. The update check in
   `roshan-platform/src/update.rs` is the **only** network access: GitHub's
-  latest-release API plus, on Windows, the release's `.exe` and
-  `SHA256SUMS.txt`. No user data is sent. Do not add other requests.
+  latest-release API plus, on Windows, the release's `Roshan-Setup-*.exe`
+  and `SHA256SUMS.txt`. No user data is sent. Do not add other requests.
 - **Honest status.** Report only what the OS told us: `Launched`, `Failed`
   (with the OS reason) or `Skipped`. Never claim an app is "running" or
   "ready".
@@ -56,8 +56,8 @@ crates/
     unix.rs           shared macOS/Linux helpers
     icon_cache.rs     on-disk PNG/SVG icon cache
     open_target.rs    URL/path classification, allowed URL schemes
-    update.rs         GitHub release check, verified download, Windows
-                      self-replace (rename running exe, copy, restart)
+    update.rs         GitHub release check, verified download, runs the
+                      Windows installer silently to update
   roshan/             The GPUI app.
     main.rs           args (--run, --startup, --updated, --version), window setup
     app.rs            all state and behavior (Roshan struct)
@@ -72,6 +72,7 @@ crates/
     build.rs          logo sizes + Windows icon/version resource
 vendor/gpui-pre-windows/  Patched GPUI Windows backend (see ROSHAN_PATCH.md)
 docs/                 DEVELOPMENT.md, media/ (posters and their HTML sources)
+packaging/windows/    Inno Setup installer (roshan.iss) + build-installer.ps1
 packaging/linux/      .desktop file
 ```
 
@@ -113,11 +114,15 @@ cross-compiled either.
 - Finishing the welcome screen enables start-at-login
   (`HKCU\...\CurrentVersion\Run`, value `Roshan`). Remove that entry after
   testing with a debug build.
-- Test updates against a local fake release: serve a `release.json` shaped
-  like GitHub's API (plus the `.exe` and `SHA256SUMS.txt`) and set
-  `ROSHAN_UPDATE_URL=http://127.0.0.1:<port>/release.json`. Run a **copy** of
-  the exe from a scratch folder, since updating replaces the running file.
-  Downloads land in `%LOCALAPPDATA%\Roshan\updates`.
+- Test updates against a local fake release: build two installers with
+  `packaging/windows/build-installer.ps1` (e.g. 1.0.0 and 1.0.1), install the
+  first, serve a `release.json` shaped like GitHub's API with the second
+  installer and its `SHA256SUMS.txt`, and set
+  `ROSHAN_UPDATE_URL=http://127.0.0.1:<port>/release.json`. Downloads land in
+  `%LOCALAPPDATA%\Roshan\updates`. Uninstall afterwards, and never answer
+  "Yes" to deleting sessions on a machine with real user data.
+- The daily check records `last_update_check` in the config; remove it to
+  check again right away.
 - Running a session really launches apps. Prefer harmless targets
   (Calculator, Notepad, `echo`) and close what you opened.
 
@@ -156,5 +161,6 @@ swallowed). Keep patches minimal and documented in `ROSHAN_PATCH.md`.
 ## Releases
 
 Manual only: Actions → **Release** → enter a version. It bumps
-`Cargo.toml`, tags, builds Windows/macOS/Linux and creates a **draft**
-release for review.
+`Cargo.toml`, tags, builds Windows (installer only)/macOS/Linux and creates a
+**draft** release for review. The updater depends on the file names
+`Roshan-Setup-<version>.exe` and `SHA256SUMS.txt`; keep them in sync.

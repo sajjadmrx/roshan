@@ -86,14 +86,18 @@ Get the latest version from the
 | macOS   | Built, but not yet tested on a real Mac |
 | Linux   | Built, but not yet tested on a real Linux desktop |
 
-Roshan is a single small program. There is nothing to install: download it,
-put it wherever you like, and open it. The first time, it asks which language
-you prefer.
+On Windows, download **Roshan-Setup** and run it. It installs just for you,
+with no administrator rights, adds Roshan to the Start menu, and can be
+removed any time from **Settings → Apps**. The first time Roshan opens, it asks
+which language you prefer. After that, it keeps itself up to date.
 
-> **Windows may warn you** the first time you open Roshan ("Windows protected
-> your PC"). This happens with new apps that are not signed with a paid
+> **Windows may warn you** when you run the setup ("Windows protected your
+> PC"). This happens with new apps that are not signed with a paid
 > certificate. Click **More info**, then **Run anyway**. The source code is
 > right here if you want to check what it does.
+
+When you uninstall Roshan, it asks whether to delete your sessions too. Your
+sessions are kept unless you say otherwise.
 
 ## Your privacy
 

@@ -123,12 +123,18 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Package (Windows)
+      - name: Install Inno Setup
         if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          mkdir dist
-          cp "target/${{ matrix.target }}/release/roshan.exe" "dist/roshan-$VERSION-${{ matrix.name }}.exe"
+        run: choco install innosetup --no-progress -y
+
+      # Windows ships an installer only (Roshan-Setup-<version>.exe); the
+      # in-app updater downloads and runs the same file.
+      - name: Package (Windows installer)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: >
+          ./packaging/windows/build-installer.ps1 -Version $env:VERSION
+          -ReleaseDir "target/${{ matrix.target }}/release" -OutDir dist
 
       - name: Package (macOS and Linux)
         if: runner.os != 'Windows'
@@ -180,14 +186,16 @@ jobs:
 
           | System | File |
           | ------ | ---- |
-          | Windows 10 and 11 | \`roshan-$VERSION-windows-x64.exe\` |
+          | Windows 10 and 11 | \`Roshan-Setup-$VERSION.exe\` |
           | macOS (Apple silicon) | \`roshan-$VERSION-macos-arm64.tar.gz\` |
           | macOS (Intel) | \`roshan-$VERSION-macos-x64.tar.gz\` |
           | Linux (x86_64) | \`roshan-$VERSION-linux-x64.tar.gz\` |
 
-          On Windows there is nothing to install: download the file and open it.
-          Windows may say "Windows protected your PC" because the app is not signed
-          with a paid certificate. Click **More info**, then **Run anyway**.
+          On Windows, run the setup. It installs just for you, with no
+          administrator rights, and adds Roshan to the Start menu. Windows may say
+          "Windows protected your PC" because the setup is not signed with a paid
+          certificate. Click **More info**, then **Run anyway**. Roshan updates
+          itself after that.
 
           The macOS and Linux builds have not been tested on real machines yet.
           macOS will also ask for confirmation the first time, because the app is

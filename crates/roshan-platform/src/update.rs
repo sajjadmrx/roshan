@@ -2,9 +2,9 @@
 //!
 //! The only network access Roshan makes. It sends a plain HTTPS request for
 //! the latest published release (drafts and pre-releases are excluded by
-//! GitHub's `/releases/latest`) and, on Windows, downloads the new executable,
-//! verifies it against the release's `SHA256SUMS.txt` and swaps it in when the
-//! user chooses to restart. Nothing about the user is sent.
+//! GitHub's `/releases/latest`) and, on Windows, downloads the release's
+//! installer, verifies it against `SHA256SUMS.txt`, and runs it silently when
+//! the user chooses to restart. Nothing about the user is sent.
 
 use std::fs;
 use std::io::{Read, Write};
@@ -18,19 +18,22 @@ use sha2::{Digest, Sha256};
 pub const RELEASES_API: &str = "https://api.github.com/repos/sajjadmrx/roshan/releases/latest";
 pub const RELEASES_PAGE: &str = "https://github.com/sajjadmrx/roshan/releases/latest";
 
-/// Command-line flag passed to the new executable after an update.
+/// Command-line flag the installer passes when it reopens Roshan after a
+/// silent update.
 pub const UPDATED_FLAG: &str = "--updated";
 
 const CHECKSUMS: &str = "SHA256SUMS.txt";
 /// Refuse absurd downloads (a Roshan build is ~25 MB).
 const MAX_DOWNLOAD: u64 = 300 * 1024 * 1024;
 
-/// The file this platform installs, if it can update itself.
-const INSTALLER_SUFFIX: Option<&str> = if cfg!(all(windows, target_arch = "x86_64")) {
-    Some("-windows-x64.exe")
-} else {
-    None
-};
+/// Windows releases ship `Roshan-Setup-<version>.exe` (see
+/// `packaging/windows/roshan.iss`). Other systems update by hand.
+const INSTALLER_PREFIX: &str = "Roshan-Setup-";
+const SELF_UPDATES: bool = cfg!(all(windows, target_arch = "x86_64"));
+
+fn is_installer(name: &str) -> bool {
+    name.starts_with(INSTALLER_PREFIX) && name.ends_with(".exe")
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Asset {
@@ -130,7 +133,11 @@ pub fn parse_release(json: &str) -> Result<Release> {
                 size: a.size,
             })
     };
-    let installer = INSTALLER_SUFFIX.and_then(|suffix| find(&|name| name.ends_with(suffix)));
+    let installer = if SELF_UPDATES {
+        find(&is_installer)
+    } else {
+        None
+    };
     let checksums = find(&|name| name == CHECKSUMS);
     Ok(Release {
         version,
@@ -217,55 +224,45 @@ pub fn download(release: &Release) -> Result<PathBuf> {
     Ok(target)
 }
 
-/// The previous executable, kept next to the new one until it has started.
-fn backup_path(exe: &Path) -> PathBuf {
-    let name = exe
-        .file_name()
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_else(|| "roshan".into());
-    exe.with_file_name(format!("{name}.old"))
-}
-
-/// Replaces the running executable with `new_exe` and starts it. The caller
+/// Runs the downloaded installer silently. It closes this copy of Roshan,
+/// replaces the files and reopens Roshan with [`UPDATED_FLAG`]. The caller
 /// quits right after this returns `Ok`.
-pub fn install_and_restart(new_exe: &Path) -> Result<()> {
-    if INSTALLER_SUFFIX.is_none() {
+pub fn install_and_restart(installer: &Path) -> Result<()> {
+    if !SELF_UPDATES {
         return Err("Roshan cannot update itself on this system yet".into());
     }
-    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-    let backup = backup_path(&exe);
-    let _ = fs::remove_file(&backup);
-    // A running executable cannot be overwritten on Windows, but it can be
-    // renamed out of the way.
-    fs::rename(&exe, &backup).map_err(|e| format!("cannot replace Roshan here: {e}"))?;
-    if let Err(e) = fs::copy(new_exe, &exe) {
-        let _ = fs::rename(&backup, &exe);
-        return Err(format!("cannot replace Roshan here: {e}"));
-    }
-    std::process::Command::new(&exe)
-        .arg(UPDATED_FLAG)
+    std::process::Command::new(installer)
+        .args([
+            "/VERYSILENT",
+            "/SUPPRESSMSGBOXES",
+            "/NORESTART",
+            "/CLOSEAPPLICATIONS",
+            // Tells the installer to reopen Roshan when it is done.
+            "/RELAUNCH=1",
+        ])
         .spawn()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format!("cannot start the installer: {e}"))?;
     Ok(())
+}
+
+/// Version of a downloaded installer, from its file name.
+fn installer_version(name: &str) -> Option<Version> {
+    name.strip_prefix(INSTALLER_PREFIX)?
+        .strip_suffix(".exe")
+        .and_then(Version::parse)
 }
 
 /// Removes leftovers of a finished update. Call once at startup.
 pub fn clean_up() {
-    if let Ok(exe) = std::env::current_exe() {
-        let _ = fs::remove_file(backup_path(&exe));
-    }
     let current = Version::parse(env!("CARGO_PKG_VERSION"));
     if let Ok(entries) = fs::read_dir(updates_dir()) {
         for entry in entries.flatten() {
             let name = entry.file_name().to_string_lossy().into_owned();
-            // Keep a download that is newer than this build; drop the rest.
-            let newer = name
-                .strip_prefix("roshan-")
-                .and_then(|rest| rest.split('-').next())
-                .and_then(Version::parse)
+            // Keep an installer that is newer than this build; drop the rest.
+            let newer = installer_version(&name)
                 .zip(current.clone())
                 .is_some_and(|(found, current)| found > current);
-            if !newer || name.ends_with(".part") {
+            if !newer {
                 let _ = fs::remove_file(entry.path());
             }
         }
@@ -282,7 +279,7 @@ mod tests {
         "draft": false,
         "prerelease": false,
         "assets": [
-            {"name": "roshan-0.2.0-windows-x64.exe", "browser_download_url": "https://example.com/w.exe", "size": 100},
+            {"name": "Roshan-Setup-0.2.0.exe", "browser_download_url": "https://example.com/w.exe", "size": 100},
             {"name": "roshan-0.2.0-linux-x64.tar.gz", "browser_download_url": "https://example.com/l.tgz", "size": 90},
             {"name": "SHA256SUMS.txt", "browser_download_url": "https://example.com/sums", "size": 10}
         ]
@@ -312,14 +309,24 @@ mod tests {
     }
 
     #[test]
+    fn reads_installer_versions() {
+        assert_eq!(
+            installer_version("Roshan-Setup-1.2.3.exe"),
+            Version::parse("1.2.3")
+        );
+        assert_eq!(installer_version("Roshan-Setup-1.2.3.exe.part"), None);
+        assert_eq!(installer_version("roshan-1.2.3-windows-x64.exe"), None);
+    }
+
+    #[test]
     fn reads_sha256sum_output() {
         let hash = "a".repeat(64);
         let sums = format!(
-            "{hash}  roshan-0.2.0-windows-x64.exe\n{}  other.tar.gz\n",
+            "{hash}  Roshan-Setup-0.2.0.exe\n{}  other.tar.gz\n",
             "b".repeat(64)
         );
         assert_eq!(
-            expected_checksum(&sums, "roshan-0.2.0-windows-x64.exe"),
+            expected_checksum(&sums, "Roshan-Setup-0.2.0.exe"),
             Some(hash)
         );
         assert_eq!(expected_checksum(&sums, "missing.exe"), None);

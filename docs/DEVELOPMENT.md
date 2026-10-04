@@ -215,13 +215,14 @@ cargo clippy --all-targets
 published release (drafts and pre-releases are never offered), at most once a
 day and only when **Settings → Check for updates automatically** is on.
 
-- **Windows:** the release's `roshan-<version>-windows-x64.exe` is downloaded
-  to `%LOCALAPPDATA%\Roshan\updates` and checked against `SHA256SUMS.txt`.
-  **Restart to update** renames the running exe to `roshan.exe.old` (Windows
-  allows renaming a running file, not overwriting it), copies the new one in
-  place and starts it with `--updated`. The new copy waits for the old one to
-  exit, then deletes the `.old` file. If Roshan lives in a folder it cannot
-  write to (such as Program Files), the swap fails and the user is told.
+- **Windows:** the release's `Roshan-Setup-<version>.exe` is downloaded to
+  `%LOCALAPPDATA%\Roshan\updates` and checked against `SHA256SUMS.txt`.
+  **Restart to update** runs it with
+  `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /RELAUNCH=1`
+  and quits. The installer replaces the files and, because of `/RELAUNCH=1`,
+  reopens Roshan with `--updated`; the new copy waits for the old one to
+  exit. Other silent installs (an administrator deploying Roshan) do not open
+  the app.
 - **macOS and Linux:** Roshan only says a new version is out and links to the
   release page.
 - `HTTPS_PROXY` / `ALL_PROXY` are respected. `ROSHAN_UPDATE_URL` points the
@@ -229,6 +230,28 @@ day and only when **Settings → Check for updates automatically** is on.
 
 The Release workflow publishes exactly the file names the updater looks for,
 so keep the two in sync.
+
+## Windows installer
+
+`packaging/windows/roshan.iss` is an [Inno Setup 6](https://jrsoftware.org/isinfo.php)
+script. It installs per user into `%LOCALAPPDATA%\Programs\Roshan` with no
+admin prompt (so updates never need one), adds a Start menu shortcut and an
+optional desktop shortcut, and registers an uninstaller. Uninstalling removes
+the app, its caches and the "open at sign-in" entry, and asks before deleting
+the user's sessions in `%APPDATA%\Roshan` (kept by default; silent uninstalls
+always keep them). Keep `AppId` unchanged forever: it ties updates and the
+uninstaller together.
+
+Build it locally after a release build:
+
+```powershell
+winget install JRSoftware.InnoSetup --scope user   # once
+cargo build --release
+./packaging/windows/build-installer.ps1 -Version 1.2.3   # -> dist\Roshan-Setup-1.2.3.exe
+```
+
+The script takes the icon and wizard pictures that `crates/roshan/build.rs`
+generates from the logo, so the repository holds no installer artwork.
 
 ## Releasing
 
@@ -238,9 +261,9 @@ Releases are made by hand with the **Release** workflow:
    **Run workflow** on the `main` branch.
 2. Enter the new version without the `v`, for example `0.2.0`.
 3. The workflow checks the version, sets it in `Cargo.toml`, commits
-   "Release v0.2.0", tags it `v0.2.0`, and builds Roshan for Windows (x64),
-   macOS (Apple silicon and Intel) and Linux (x64), running the tests where
-   it can.
+   "Release v0.2.0", tags it `v0.2.0`, and builds Roshan for Windows (x64,
+   as `Roshan-Setup-0.2.0.exe`), macOS (Apple silicon and Intel) and Linux
+   (x64), running the tests where it can.
 4. It then creates a **draft** release with the files, a `SHA256SUMS.txt`
    and generated notes. Review it on the Releases page and publish it.
 
