@@ -62,7 +62,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "Release v$VERSION"
+          # The version may already be right (e.g. the first release).
+          if git diff --quiet; then
+            echo "Cargo.toml already says $VERSION; tagging the current commit."
+          else
+            git commit -am "Release v$VERSION"
+          fi
           git tag "v$VERSION"
           git push origin "HEAD:refs/heads/$GITHUB_REF_NAME" "v$VERSION"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
