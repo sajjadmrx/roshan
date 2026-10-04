@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="style.css">
+<style>
+  .canvas { gap: 48px; }
+  .steps { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .step {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--surface); font-size: 17px;
+  }
+  .step b { width: 22px; color: var(--faint); font-weight: 600; }
+  .step em { margin-left: auto; font-style: normal; font-size: 14px; color: var(--faint); }
+  .after { display: flex; flex-direction: column; align-items: flex-start; }
+  .arrow { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 110px;
+           text-align: center; font-size: 15px; line-height: 1.35; color: var(--muted); }
+  .arrow b { font-size: 30px; font-weight: 400; color: var(--faint); }
+</style></head>
+<body><div class="canvas">
+  <div class="copy">
+    <div class="eyebrow">The problem</div>
+    <h1>The same routine,<br>by hand, every day.</h1>
+    <div class="steps">
+      <div class="step"><b>1</b>Open Windscribe<em>wait for the VPN</em></div>
+      <div class="step"><b>2</b>Open a terminal, type 9router<em>wait for it to start</em></div>
+      <div class="step"><b>3</b>Open Claude</div>
+      <div class="step"><b>4</b>Open Telegram</div>
+    </div>
+  </div>
+  <div class="arrow"><b>&rarr;</b>With Roshan,<br>press Run once</div>
+  <div class="after">
+    <div class="win"><img src="shots/en-running-dark.png" alt=""></div>
+  </div>
+</div></body></html>

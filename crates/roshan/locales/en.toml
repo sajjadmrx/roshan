@@ -1,0 +1,157 @@
+# English strings for Roshan.
+# To add a language: copy this file to locales/<code>.toml, translate the
+# values (keep the {placeholders}), and register it in src/i18n.rs.
+
+[app]
+name = "Roshan"
+tagline = "Start your day, your way."
+
+[welcome]
+title = "Welcome to Roshan"
+subtitle = "Pick a language. You can change it later in Settings."
+continue = "Continue"
+
+[sessions]
+title = "Sessions"
+new = "New session"
+default_name = "New session"
+items_one = "1 item"
+items_other = "{n} items"
+empty_items = "Empty"
+empty_title = "No sessions yet"
+empty_body = "A session is a set of apps and commands you start together, one after another."
+empty_action = "Create a session"
+total_wait = "{s}s total wait"
+
+[session]
+add = "Add"
+run = "Run"
+stop = "Stop"
+rename = "Rename"
+delete = "Delete session"
+badge = "Icon"
+empty_title = "Nothing here yet"
+empty_body = "Add apps, commands or links. They start from top to bottom."
+drag_hint = "Drag to reorder"
+delete_title = "Delete “{name}”?"
+delete_body = "The session and its list are removed. Your apps are not touched."
+missing = "Not found on this computer"
+
+[item]
+wait = "then {s}s"
+no_wait = "no wait"
+kind_app = "App"
+kind_command = "Command"
+kind_open = "Link"
+kind_folder = "Folder"
+kind_file = "File"
+in_terminal = "in terminal"
+in_background = "in background"
+
+[run]
+starting = "Starting…"
+next_in = "Next in {s}s"
+skip = "Skip"
+all_ok_one = "Launched"
+all_ok = "All {n} launched"
+partial = "{ok} of {n} launched"
+stopped = "Stopped"
+dismiss = "Dismiss"
+busy = "Another session is running"
+
+[status]
+pending = "Waiting"
+launching = "Starting"
+launched = "Launched"
+failed = "Failed"
+skipped = "Skipped"
+cancelled = "Not started"
+
+[error]
+not_found = "Not found"
+not_found_what = "Not found: {what}"
+access_denied = "Access denied"
+elevation_cancelled = "The administrator prompt was cancelled"
+no_handler = "No app is set to open this"
+no_terminal = "No terminal app was found"
+blocked = "Blocked for safety: {what} links are not allowed"
+unsupported = "Not supported on this system"
+os = "{message}"
+
+[picker]
+title = "Add to {session}"
+tab_apps = "Apps"
+tab_command = "Command"
+tab_open = "Link / File"
+search = "Search apps"
+loading = "Finding your apps…"
+no_apps = "No apps found"
+no_results = "Nothing matches “{q}”"
+browse = "Browse for a program…"
+refresh = "Refresh list"
+count = "{n} apps"
+
+[command]
+line = "Command"
+line_placeholder = "e.g. npm run dev"
+name = "Name"
+name_placeholder = "Shown in the list (optional)"
+cwd = "Folder"
+cwd_placeholder = "Home folder"
+terminal = "Show a terminal window"
+terminal_hint_on = "Opens a new terminal so you can see its output."
+terminal_hint_off = "Runs silently in the background, with no window."
+shell_note = "Runs with your system shell, exactly as typed."
+add = "Add command"
+
+[open]
+target = "Link, file or folder"
+target_placeholder = "https://… or a path"
+name = "Name"
+name_placeholder = "Shown in the list (optional)"
+file = "File…"
+folder = "Folder…"
+add = "Add"
+invalid = "Enter a web link or an existing file or folder"
+
+[editor]
+title = "Edit item"
+name = "Name"
+wait = "Wait before the next item"
+wait_hint = "Gives this item time to start before the next one launches."
+wait_last = "This is the last item, so nothing waits for it."
+seconds = "{n}s"
+move_up = "Move up"
+move_down = "Move down"
+remove = "Remove from session"
+done = "Done"
+
+[settings]
+title = "Settings"
+language = "Language"
+theme = "Appearance"
+theme_system = "System"
+theme_light = "Light"
+theme_dark = "Dark"
+behavior = "Behavior"
+start_at_login = "Open when you sign in"
+start_at_login_hint = "Roshan waits quietly so you can start a session in one click."
+close_after_run = "Close after a successful run"
+close_after_run_hint = "Roshan quits once every item launched."
+config = "Sessions file"
+open_config = "Show file"
+about = "Version {version} · Free & open source · Works offline · No telemetry"
+
+[common]
+cancel = "Cancel"
+delete = "Delete"
+save = "Save"
+back = "Back"
+close = "Close"
+minimize = "Minimize"
+browse = "Browse…"
+optional = "optional"
+
+[config_error]
+title = "Your sessions file couldn't be read"
+body = "It was kept at {path}. Roshan started with an empty list."

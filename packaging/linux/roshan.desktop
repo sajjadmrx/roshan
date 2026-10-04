@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Roshan
+Name[fa]=روشن
+Comment=Launch your apps and commands together, in order
+Comment[fa]=برنامه‌ها و دستورهات رو با هم و به ترتیب اجرا کن
+Exec=roshan
+Icon=roshan
+Terminal=false
+Categories=Utility;
+StartupWMClass=roshan

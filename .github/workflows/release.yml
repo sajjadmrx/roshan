@@ -1,0 +1,198 @@
+name: Release
+
+# Run by hand from the Actions tab ("Run workflow"). It asks for the version,
+# bumps it in Cargo.toml, tags the commit, builds Roshan for every platform and
+# creates a draft GitHub Release to review and publish.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, without the v (for example 0.2.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  VERSION: ${{ inputs.version }}
+  CARGO_TERM_COLOR: always
+
+jobs:
+  prepare:
+    name: Bump version and tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check the version
+        run: |
+          if [ "$GITHUB_REF_TYPE" != "branch" ]; then
+            echo "::error::Run this workflow from a branch, not from a tag"
+            exit 1
+          fi
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::'$VERSION' is not a version like 1.2.3 or 1.2.3-beta.1"
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::v$VERSION was already released"
+            exit 1
+          fi
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Set the version in Cargo.toml
+        run: |
+          # Only the [workspace.package] version, which every crate inherits.
+          sed -i -E '0,/^version = "[^"]*"/s//version = "'"$VERSION"'"/' Cargo.toml
+          cargo update --workspace
+          git diff --stat
+
+      - name: Commit and tag
+        id: tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Release v$VERSION"
+          git tag "v$VERSION"
+          git push origin "HEAD:refs/heads/$GITHUB_REF_NAME" "v$VERSION"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.name }})
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            test: true
+          - name: macos-arm64
+            os: macos-latest
+            target: aarch64-apple-darwin
+            test: true
+          - name: macos-x64
+            os: macos-latest
+            target: x86_64-apple-darwin
+            test: false
+          - name: linux-x64
+            os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            test: true
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Linux system libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev \
+            libvulkan-dev libx11-xcb-dev libxcb1-dev libfontconfig-dev libfreetype-dev
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Test
+        if: matrix.test
+        run: cargo test --release --target ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir dist
+          cp "target/${{ matrix.target }}/release/roshan.exe" "dist/roshan-$VERSION-${{ matrix.name }}.exe"
+
+      - name: Package (macOS and Linux)
+        if: runner.os != 'Windows'
+        run: |
+          name="roshan-$VERSION-${{ matrix.name }}"
+          mkdir -p "dist/$name"
+          cp "target/${{ matrix.target }}/release/roshan" "dist/$name/"
+          cp README.md LICENSE "dist/$name/"
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            cp packaging/linux/roshan.desktop "dist/$name/"
+            cp crates/roshan/assets/logo/roshan.png "dist/$name/roshan.png"
+          fi
+          tar -C dist -czf "dist/$name.tar.gz" "$name"
+          rm -rf "dist/$name"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: roshan-${{ matrix.name }}
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Draft the release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        run: |
+          cd dist
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          cat > notes.md <<EOF
+          ## Download
+
+          | System | File |
+          | ------ | ---- |
+          | Windows 10 and 11 | \`roshan-$VERSION-windows-x64.exe\` |
+          | macOS (Apple silicon) | \`roshan-$VERSION-macos-arm64.tar.gz\` |
+          | macOS (Intel) | \`roshan-$VERSION-macos-x64.tar.gz\` |
+          | Linux (x86_64) | \`roshan-$VERSION-linux-x64.tar.gz\` |
+
+          On Windows there is nothing to install: download the file and open it.
+          Windows may say "Windows protected your PC" because the app is not signed
+          with a paid certificate. Click **More info**, then **Run anyway**.
+
+          The macOS and Linux builds have not been tested on real machines yet.
+          macOS will also ask for confirmation the first time, because the app is
+          not notarized.
+
+          \`SHA256SUMS.txt\` lists a checksum for every file.
+          EOF
+          gh release create "$TAG" dist/* \
+            --draft \
+            --title "Roshan $VERSION" \
+            --notes-file notes.md \
+            --generate-notes \
+            --verify-tag

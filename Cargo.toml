@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = ["crates/roshan", "crates/roshan-core", "crates/roshan-platform"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/sajjadmrx/roshan"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+opt-level = 3
+
+[profile.dev.package."*"]
+opt-level = 1
+
+# GPUI's Windows text renderer ignores DirectWrite's right-to-left runs, which
+# renders Persian text mirrored. vendor/gpui-pre-windows carries a minimal fix
+# (see vendor/gpui-pre-windows/ROSHAN_PATCH.md).
+[patch.crates-io]
+gpui-pre-windows = { path = "vendor/gpui-pre-windows" }

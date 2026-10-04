@@ -1,0 +1,159 @@
+# رشته‌های فارسی روشن
+# Follows TYPOGRAPHY.md: casual modern tone, no tanween, no trailing periods,
+# no exclamation marks, real half-spaces (ZWNJ), Persian digits.
+# Right-to-left text is not wrapped automatically: break long strings with \n
+# so that each line fits the compact window (about 40 characters).
+
+[app]
+name = "روشن"
+tagline = "روزت رو همون‌طور که دوست داری شروع کن"
+
+[welcome]
+title = "به روشن خوش اومدی"
+subtitle = "زبانت رو انتخاب کن\nبعدا هم می‌تونی از تنظیمات عوضش کنی"
+continue = "بزن بریم"
+
+[sessions]
+title = "روتین‌ها"
+new = "روتین جدید"
+default_name = "روتین جدید"
+items_one = "۱ مورد"
+items_other = "{n} مورد"
+empty_items = "خالیه"
+empty_title = "هنوز روتینی نساختی"
+empty_body = "هر روتین یه سری برنامه و دستوره\nکه پشت‌سرهم و با یه کلیک اجرا می‌شن"
+empty_action = "ساختن اولین روتین"
+total_wait = "{s} ثانیه مکث در کل"
+
+[session]
+add = "افزودن"
+run = "اجرا"
+stop = "توقف"
+rename = "تغییر اسم"
+delete = "حذف روتین"
+badge = "نماد"
+empty_title = "هنوز چیزی اینجا نیست"
+empty_body = "برنامه، دستور یا لینک اضافه کن\nاز بالا به پایین اجرا می‌شن"
+drag_hint = "برای جابه‌جایی بکشش"
+delete_title = "«{name}» حذف بشه؟"
+delete_body = "فقط خود روتین پاک می‌شه\nبه برنامه‌هات دست نمی‌زنیم"
+missing = "روی این سیستم پیدا نشد"
+
+[item]
+wait = "بعدش {s} ثانیه"
+no_wait = "بدون مکث"
+kind_app = "برنامه"
+kind_command = "دستور"
+kind_open = "لینک"
+kind_folder = "پوشه"
+kind_file = "فایل"
+in_terminal = "توی ترمینال"
+in_background = "توی پس‌زمینه"
+
+[run]
+starting = "در حال شروع…"
+next_in = "بعدی تا {s} ثانیه دیگه"
+skip = "رد کن"
+all_ok_one = "اجرا شد"
+all_ok = "هر {n} مورد اجرا شد"
+partial = "{ok} از {n} مورد اجرا شد"
+stopped = "متوقف شد"
+dismiss = "باشه"
+busy = "یه روتین دیگه در حال اجراست"
+
+[status]
+pending = "توی صف"
+launching = "در حال اجرا"
+launched = "اجرا شد"
+failed = "ناموفق"
+skipped = "رد شد"
+cancelled = "اجرا نشد"
+
+[error]
+not_found = "پیدا نشد"
+not_found_what = "پیدا نشد: {what}"
+access_denied = "اجازه‌ی دسترسی داده نشد"
+elevation_cancelled = "درخواست دسترسی مدیر رد شد"
+no_handler = "برنامه‌ای برای باز کردنش تنظیم نشده"
+no_terminal = "هیچ ترمینالی پیدا نشد"
+blocked = "برای امنیتت مسدود شد: لینک‌های {what} مجاز نیستن"
+unsupported = "روی این سیستم پشتیبانی نمی‌شه"
+os = "{message}"
+
+[picker]
+title = "افزودن به {session}"
+tab_apps = "برنامه‌ها"
+tab_command = "دستور"
+tab_open = "لینک / فایل"
+search = "جست‌وجوی برنامه"
+loading = "دارم برنامه‌هات رو پیدا می‌کنم…"
+no_apps = "برنامه‌ای پیدا نشد"
+no_results = "چیزی با «{q}» پیدا نشد"
+browse = "انتخاب برنامه از روی دیسک…"
+refresh = "به‌روزرسانی فهرست"
+count = "{n} برنامه"
+
+[command]
+line = "دستور"
+line_placeholder = "مثلا npm run dev"
+name = "اسم"
+name_placeholder = "اسمی که توی فهرست می‌بینی (اختیاری)"
+cwd = "پوشه"
+cwd_placeholder = "پوشه‌ی خانه"
+terminal = "نمایش پنجره‌ی ترمینال"
+terminal_hint_on = "یه ترمینال تازه باز می‌شه\nتا خروجی رو ببینی"
+terminal_hint_off = "بی‌سروصدا و بدون پنجره\nتوی پس‌زمینه اجرا می‌شه"
+shell_note = "دقیقا همون‌طور که نوشتی با پوسته‌ی سیستم اجرا می‌شه"
+add = "افزودن دستور"
+
+[open]
+target = "لینک، فایل یا پوشه"
+target_placeholder = "https://… یا یه مسیر"
+name = "اسم"
+name_placeholder = "اسمی که توی فهرست می‌بینی (اختیاری)"
+file = "فایل…"
+folder = "پوشه…"
+add = "افزودن"
+invalid = "یه لینک وب یا فایل و پوشه‌ی موجود وارد کن"
+
+[editor]
+title = "ویرایش مورد"
+name = "اسم"
+wait = "مکث قبل از مورد بعدی"
+wait_hint = "به این مورد فرصت می‌ده قبل از مورد بعدی\nکامل بالا بیاد"
+wait_last = "این آخرین مورده، پس کسی منتظرش نمی‌مونه"
+seconds = "{n} ثانیه"
+move_up = "بالاتر"
+move_down = "پایین‌تر"
+remove = "حذف از روتین"
+done = "تموم"
+
+[settings]
+title = "تنظیمات"
+language = "زبان"
+theme = "ظاهر"
+theme_system = "مثل سیستم"
+theme_light = "روز"
+theme_dark = "شب"
+behavior = "رفتار"
+start_at_login = "باز شدن همراه سیستم"
+start_at_login_hint = "روشن بی‌صدا منتظر می‌مونه\nتا با یه کلیک روتینت رو شروع کنی"
+close_after_run = "بستن بعد از اجرای موفق"
+close_after_run_hint = "وقتی همه‌ی موارد اجرا شدن\nروشن خودش بسته می‌شه"
+config = "فایل روتین‌ها"
+open_config = "نمایش فایل"
+about = "نسخه‌ی {version}، رایگان و متن‌باز\nبدون اینترنت و بدون ردیابی"
+
+[common]
+cancel = "فعلا نه"
+delete = "حذف"
+save = "ذخیره"
+back = "برگشت"
+close = "بستن"
+minimize = "کوچک کردن"
+browse = "انتخاب…"
+optional = "اختیاری"
+
+[config_error]
+title = "فایل روتین‌ها خونده نشد"
+body = "یه نسخه‌ش رو توی {path} نگه داشتیم\nروشن با فهرست خالی شروع کرد"

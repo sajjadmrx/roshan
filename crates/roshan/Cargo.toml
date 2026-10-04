@@ -1,0 +1,22 @@
+[package]
+name = "roshan"
+description = "Roshan (روشن): launch your apps and commands together, in order"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+roshan-core = { path = "../roshan-core" }
+roshan-platform = { path = "../roshan-platform" }
+gpui-kit = "0.7"
+# The three below are already in GPUI's dependency tree.
+futures = "0.3"
+rust-embed = { version = "8", features = ["include-exclude"] }
+anyhow = "1"
+toml = "0.9"
+
+[build-dependencies]
+image = { version = "0.25", default-features = false, features = ["png", "ico"] }
+
+[target.'cfg(windows)'.build-dependencies]
+embed-resource = "3"

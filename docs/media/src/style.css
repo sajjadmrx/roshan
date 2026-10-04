@@ -1,0 +1,100 @@
+/* Shared look for Roshan's posters: the app's own palette (charcoal tile,
+   cream bowl, one amber light), no gradients, no glows. 1280x640 canvas. */
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("../../../crates/roshan/assets/fonts/Vazirmatn-Bold.ttf");
+  font-weight: 700;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("../../../crates/roshan/assets/fonts/Vazirmatn-Regular.ttf");
+  font-weight: 400;
+}
+
+:root {
+  --bg: #141312;
+  --surface: #1c1b19;
+  --line: rgba(255, 246, 232, 0.09);
+  --text: #f1ece4;
+  --muted: #a29b91;
+  --faint: #6c675f;
+  --cream: #eee5d6;
+  --amber: #ffab2e;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 1280px;
+  height: 640px;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.canvas {
+  position: relative;
+  width: 1280px;
+  height: 640px;
+  display: flex;
+  align-items: center;
+  gap: 56px;
+  padding: 0 72px;
+}
+
+.copy { flex: 1; display: flex; flex-direction: column; gap: 22px; }
+
+.brand { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 600; }
+.brand img { width: 36px; height: 36px; }
+
+.eyebrow {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+h1 {
+  font-size: 54px;
+  line-height: 1.05;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+p.lead { font-size: 21px; line-height: 1.5; color: var(--muted); max-width: 520px; }
+
+.facts { display: flex; gap: 22px; font-size: 15px; color: var(--faint); }
+.facts span::before { content: "\25CF"; color: var(--amber); margin-right: 8px; font-size: 9px; vertical-align: 3px; }
+
+/* A screenshot shown as the real window: 380x580, rounded like Windows 11. */
+.win {
+  width: 380px;
+  height: 580px;
+  flex: none;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.win img { display: block; width: 380px; height: 580px; }
+.win.light { border-color: rgba(29, 26, 22, 0.14); }
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 12px;
+}
+
+/* Two windows, the front one offset and separated by a ring of background. */
+.pair { position: relative; flex: none; width: 640px; height: 610px; }
+.pair .win { position: absolute; }
+.pair .win:first-child { left: 0; top: 0; }
+.pair .win:last-child { left: 260px; top: 30px; box-shadow: 0 0 0 8px var(--bg); }
+
+.fa { font-family: "Vazirmatn", sans-serif; direction: rtl; }

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><link rel="stylesheet" href="style.css">
+<style>
+  body { font-family: "Vazirmatn", sans-serif; }
+  .canvas { direction: rtl; flex-direction: column; align-items: stretch; justify-content: center; gap: 28px; }
+  .head { display: flex; flex-direction: column; gap: 12px; }
+  .eyebrow { letter-spacing: 0; font-size: 17px; }
+  h1 { font-family: "Vazirmatn", sans-serif; font-weight: 700; font-size: 48px; line-height: 1.35; letter-spacing: 0; }
+  .head p.lead { max-width: 980px; font-size: 20px; line-height: 1.8; }
+  .row { display: flex; align-items: center; gap: 18px; }
+  .row .name { width: 190px; flex: none; font-size: 17px; color: var(--muted); }
+  .track {
+    position: relative; flex: 1; height: 64px;
+    border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+    display: flex; align-items: center; padding: 0 14px; gap: 8px;
+  }
+  .chip {
+    padding: 7px 12px; border-radius: 8px; font-size: 14px; white-space: nowrap;
+    background: #2b2927; color: var(--text); border: 1px solid var(--line);
+    font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  }
+  .pile { display: flex; gap: 3px; }
+  .pile .chip { border-color: rgba(240, 118, 107, 0.45); }
+  .note { margin-inline-start: auto; font-size: 15px; }
+  .bad .note { color: #f0766b; }
+  .mark { font-size: 14px; color: var(--faint); white-space: nowrap; }
+  .run {
+    padding: 6px 16px; border-radius: 8px; font-size: 15px; font-weight: 700;
+    background: var(--cream); color: #181614;
+  }
+  .wait { flex: 1; border-top: 1px dashed var(--faint); margin: 0 6px; opacity: .6; }
+  .on { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); flex: none; }
+  .gap { width: 22px; border-top: 1px solid var(--faint); opacity: .6; }
+</style></head>
+<body><div class="canvas">
+  <div class="head">
+    <div class="eyebrow">یه برنامه‌ی استارتاپی دیگه نیست</div>
+    <h1>سیستمت سبک بالا میاد<br>برنامه‌هات هر وقت که خودت بخوای</h1>
+    <p class="lead">اگه همه‌چیز رو بذاری توی استارتاپ، ورود به ویندوز کند و شلوغ می‌شه. روشن تنها باز می‌شه، بی‌صدا و بدون مصرف پردازنده منتظر می‌مونه و وقتی اجرا رو بزنی، برنامه‌هات رو یکی‌یکی باز می‌کنه</p>
+  </div>
+  <div class="row bad">
+    <div class="name">همه‌چیز توی استارتاپ</div>
+    <div class="track">
+      <span class="mark">ورود به ویندوز</span>
+      <div class="pile">
+        <span class="chip">Windscribe</span><span class="chip">Terminal</span><span class="chip">Claude</span><span class="chip">Telegram</span>
+      </div>
+      <span class="note">همه با هم، حتی قبل از اینکه لازمشون داشته باشی</span>
+    </div>
+  </div>
+  <div class="row">
+    <div class="name">با روشن</div>
+    <div class="track">
+      <span class="mark">ورود به ویندوز</span><span class="on"></span><span class="mark">روشن منتظره</span>
+      <div class="wait"></div>
+      <span class="run">اجرا</span>
+      <span class="chip">Windscribe</span><span class="gap"></span>
+      <span class="chip">Terminal</span><span class="gap"></span>
+      <span class="chip">Claude</span><span class="gap"></span>
+      <span class="chip">Telegram</span>
+    </div>
+  </div>
+</div></body></html>

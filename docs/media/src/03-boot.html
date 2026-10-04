@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="style.css">
+<style>
+  .canvas { flex-direction: column; align-items: stretch; justify-content: center; gap: 30px; }
+  .head { display: flex; flex-direction: column; gap: 14px; }
+  .head p.lead { max-width: 900px; }
+  .row { display: flex; align-items: center; gap: 18px; }
+  .row .name { width: 210px; flex: none; font-size: 16px; color: var(--muted); }
+  .track {
+    position: relative; flex: 1; height: 64px;
+    border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+    display: flex; align-items: center; padding: 0 14px; gap: 8px;
+  }
+  .chip {
+    padding: 7px 12px; border-radius: 8px; font-size: 14px; white-space: nowrap;
+    background: #2b2927; color: var(--text); border: 1px solid var(--line);
+  }
+  .pile { display: flex; }
+  .pile { gap: 3px; }
+  .pile .chip { border-color: rgba(240, 118, 107, 0.45); }
+  .note { margin-left: auto; font-size: 14px; color: var(--faint); }
+  .bad .note { color: #f0766b; }
+  .mark { font-size: 13px; color: var(--faint); white-space: nowrap; }
+  .run {
+    padding: 7px 14px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    background: var(--cream); color: #181614;
+  }
+  .wait { flex: 1; border-top: 1px dashed var(--faint); margin: 0 6px; opacity: .6; }
+  .on { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); flex: none; }
+  .gap { width: 22px; border-top: 1px solid var(--faint); opacity: .6; }
+</style></head>
+<body><div class="canvas">
+  <div class="head">
+    <div class="eyebrow">Not another startup item</div>
+    <h1>Your computer starts light.<br>Your apps start when you say so.</h1>
+    <p class="lead">Putting everything in startup makes signing in slow and noisy. Roshan opens alone, waits quietly without using the CPU, and starts your apps one by one when you press Run.</p>
+  </div>
+  <div class="row bad">
+    <div class="name">Everything in startup</div>
+    <div class="track">
+      <span class="mark">Sign in</span>
+      <div class="pile">
+        <span class="chip">Windscribe</span><span class="chip">Terminal</span><span class="chip">Claude</span><span class="chip">Telegram</span>
+      </div>
+      <span class="note">all at once, before you even need them</span>
+    </div>
+  </div>
+  <div class="row">
+    <div class="name">With Roshan</div>
+    <div class="track">
+      <span class="mark">Sign in</span><span class="on"></span><span class="mark">Roshan waits</span>
+      <div class="wait"></div>
+      <span class="run">Run</span>
+      <span class="chip">Windscribe</span><span class="gap"></span>
+      <span class="chip">Terminal</span><span class="gap"></span>
+      <span class="chip">Claude</span><span class="gap"></span>
+      <span class="chip">Telegram</span>
+    </div>
+  </div>
+</div></body></html>
