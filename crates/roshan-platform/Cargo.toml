@@ -10,6 +10,11 @@ roshan-core = { path = "../roshan-core" }
 dirs = "6"
 # Already part of GPUI's dependency tree; used here to encode icons as PNG.
 image = { version = "0.25", default-features = false, features = ["png"] }
+# Update check: one small HTTPS client (rustls), checksums, and JSON parsing.
+ureq = { version = "3", default-features = false, features = ["rustls", "gzip"] }
+sha2 = "0.11"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62", features = [

@@ -130,7 +130,10 @@ When idle it uses no CPU.
 
 ## Privacy and security
 
-- Roshan makes no network requests and collects nothing.
+- Roshan collects nothing. Its only network access is the update check:
+  one request to GitHub's latest-release API (at most daily, can be turned
+  off) and, on Windows, downloading that release's `.exe` and
+  `SHA256SUMS.txt`. The download is verified before it is installed.
 - Nothing runs unless you press **Run** (or start Roshan with `--run`).
 - Apps are launched directly, without a shell. Only items you created as a
   **Command** go through a shell, exactly as you typed them, and the UI says
@@ -204,6 +207,28 @@ cargo test                                   # all unit tests
 cargo run -p roshan-platform --example list_apps [filter]   # what discovery sees
 cargo clippy --all-targets
 ```
+
+## Updates
+
+`crates/roshan-platform/src/update.rs` asks
+`https://api.github.com/repos/sajjadmrx/roshan/releases/latest` for the newest
+published release (drafts and pre-releases are never offered), at most once a
+day and only when **Settings → Check for updates automatically** is on.
+
+- **Windows:** the release's `roshan-<version>-windows-x64.exe` is downloaded
+  to `%LOCALAPPDATA%\Roshan\updates` and checked against `SHA256SUMS.txt`.
+  **Restart to update** renames the running exe to `roshan.exe.old` (Windows
+  allows renaming a running file, not overwriting it), copies the new one in
+  place and starts it with `--updated`. The new copy waits for the old one to
+  exit, then deletes the `.old` file. If Roshan lives in a folder it cannot
+  write to (such as Program Files), the swap fails and the user is told.
+- **macOS and Linux:** Roshan only says a new version is out and links to the
+  release page.
+- `HTTPS_PROXY` / `ALL_PROXY` are respected. `ROSHAN_UPDATE_URL` points the
+  check at another server for testing.
+
+The Release workflow publishes exactly the file names the updater looks for,
+so keep the two in sync.
 
 ## Releasing
 

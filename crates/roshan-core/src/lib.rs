@@ -7,9 +7,11 @@
 pub mod config;
 pub mod engine;
 pub mod model;
+pub mod version;
 
 pub use config::{Config, ConfigError, Settings, ThemePreference};
 pub use engine::{
     CancelToken, ItemStatus, LaunchError, Launched, Launcher, RunEvent, RunSummary, SkipReason,
 };
 pub use model::{AppTarget, ItemKind, LaunchItem, MAX_WAIT_SECS, Session};
+pub use version::Version;

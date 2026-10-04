@@ -40,6 +40,7 @@ impl Roshan {
         }
         let p = palette(cx);
         let i = i18n(cx);
+        let banner = self.render_update_banner(cx);
         let cards: Vec<AnyElement> = (0..self.config.sessions.len())
             .map(|ix| self.session_card(ix, cx).into_any_element())
             .collect();
@@ -52,6 +53,7 @@ impl Roshan {
             .flex()
             .flex_col()
             .gap(px(8.))
+            .children(banner)
             .children(cards)
             .child(
                 hrow(cx)

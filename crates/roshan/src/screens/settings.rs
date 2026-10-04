@@ -165,6 +165,7 @@ impl Roshan {
                 }),
             );
 
+        let updates = self.render_update_settings(cx).into_any_element();
         let sections: Vec<AnyElement> = vec![
             section(i.t("settings.language"), language, cx).into_any_element(),
             section(i.t("settings.theme"), theme, cx).into_any_element(),
@@ -179,6 +180,7 @@ impl Roshan {
                 cx,
             )
             .into_any_element(),
+            section(i.t("update.section"), updates, cx).into_any_element(),
             section(i.t("settings.config"), config_file, cx).into_any_element(),
         ];
 

@@ -6,7 +6,7 @@
 
 <p align="center">
   Start the apps you use every day in one click, in the right order.<br>
-  Free, open source and offline.
+  Free, open source, and private.
 </p>
 
 <p align="center">
@@ -69,6 +69,7 @@ one click whenever you are ready.
   the evening.
 - **English and Persian**, with a full right-to-left Persian interface.
 - **Light and dark themes**, following your system by default.
+- **Stays up to date.** New versions install with one click on Windows.
 
 ![Pick from what you actually have](docs/media/05-apps.png)
 
@@ -96,7 +97,8 @@ you prefer.
 
 ## Your privacy
 
-- Roshan works **completely offline**. It never connects to the internet.
+- Roshan works **without an internet connection**. The only thing it ever
+  asks the internet is whether a new version of Roshan is out (see below).
 - There is **no account**, no tracking and no analytics.
 - Your sessions are saved in one small file on your own computer.
 - Nothing runs until you press Run.
@@ -119,6 +121,15 @@ seconds you set before opening the next one. Choose a pause that fits your VPN.
 **Can it run terminal commands?**
 Yes. Add a **Command**, type it exactly as you would in a terminal, and choose
 whether it opens in a terminal window or runs quietly in the background.
+
+**How does Roshan update itself?**
+Once a day, Roshan asks GitHub whether a new version has been released.
+Nothing about you or your sessions is sent. On Windows, a new version is
+downloaded in the background and checked against its published checksum,
+then Roshan shows **Restart to update**. Nothing restarts until you click it.
+On macOS and Linux, Roshan tells you a new version is out and links to it.
+You can turn automatic checks off in **Settings**, and check by hand with
+**Check now**.
 
 **Can I stop Roshan from opening when I sign in?**
 Yes. Open **Settings** and turn off **Open when you sign in**.

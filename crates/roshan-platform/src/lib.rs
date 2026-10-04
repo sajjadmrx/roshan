@@ -14,6 +14,7 @@ use roshan_core::{AppTarget, ItemKind, LaunchError, Launched, Launcher};
 
 mod icon_cache;
 pub mod open_target;
+pub mod update;
 
 // `.desktop` parsing is pure code; it is compiled for tests everywhere.
 #[cfg(any(target_os = "linux", test))]
@@ -111,9 +112,24 @@ pub fn config_path() -> PathBuf {
 
 /// Makes sure only one Roshan runs at a time, so two windows never overwrite
 /// each other's changes. Returns `false` if another instance is already
-/// running, after bringing its window to the front.
-pub fn claim_single_instance() -> bool {
-    os::claim_single_instance()
+/// running; with `focus_existing`, its window is brought to the front.
+pub fn claim_single_instance(focus_existing: bool) -> bool {
+    os::claim_single_instance(focus_existing)
+}
+
+/// After an update the new copy starts while the old one is still closing:
+/// wait for it (up to `timeout`) instead of giving up straight away.
+pub fn claim_single_instance_patiently(timeout: std::time::Duration) -> bool {
+    let deadline = std::time::Instant::now() + timeout;
+    loop {
+        if os::claim_single_instance(false) {
+            return true;
+        }
+        if std::time::Instant::now() >= deadline {
+            return os::claim_single_instance(true);
+        }
+        std::thread::sleep(std::time::Duration::from_millis(200));
+    }
 }
 
 /// Whether Roshan opens automatically when the user signs in. Read from the

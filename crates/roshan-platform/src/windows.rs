@@ -468,7 +468,7 @@ pub fn set_start_at_login(enabled: bool, exe: &Path) -> Result<(), String> {
     }
 }
 
-pub fn claim_single_instance() -> bool {
+pub fn claim_single_instance(focus_existing: bool) -> bool {
     use windows::Win32::Foundation::{ERROR_ALREADY_EXISTS, GetLastError};
     use windows::Win32::System::Threading::CreateMutexW;
     use windows::Win32::UI::WindowsAndMessaging::{
@@ -479,8 +479,16 @@ pub fn claim_single_instance() -> bool {
     // The mutex lives as long as the process; Windows releases it on exit.
     let mutex = unsafe { CreateMutexW(None, true, w!("Local\\Roshan.SingleInstance")) };
     let already_running = unsafe { GetLastError() } == ERROR_ALREADY_EXISTS;
-    if mutex.is_err() || !already_running {
+    let Ok(mutex) = mutex else {
         return true;
+    };
+    if !already_running {
+        return true;
+    }
+    // Not ours: release this handle so retries do not leak.
+    let _ = unsafe { CloseHandle(mutex) };
+    if !focus_existing {
+        return false;
     }
     // GPUI windows use this class; the title is set by Roshan.
     if let Ok(hwnd) = unsafe { FindWindowW(w!("Zed::Window"), w!("Roshan")) } {

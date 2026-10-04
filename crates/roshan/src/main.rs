@@ -27,12 +27,15 @@ Set ROSHAN_CONFIG to use a different sessions file.";
 
 fn main() {
     let mut run_on_start = None;
+    let mut just_updated = false;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--run" | "-r" => run_on_start = args.next(),
             // Passed by the sign-in entry; Roshan simply opens.
             flag if flag == roshan_platform::STARTUP_FLAG => {}
+            // Passed by the previous copy after it installed an update.
+            flag if flag == roshan_platform::update::UPDATED_FLAG => just_updated = true,
             "--version" | "-V" => {
                 println!("roshan {}", env!("CARGO_PKG_VERSION"));
                 return;
@@ -44,10 +47,17 @@ fn main() {
         }
     }
 
-    if !roshan_platform::claim_single_instance() {
+    let claimed = if just_updated {
+        // The previous copy is still closing; give it a moment.
+        roshan_platform::claim_single_instance_patiently(std::time::Duration::from_secs(15))
+    } else {
+        roshan_platform::claim_single_instance(true)
+    };
+    if !claimed {
         // Roshan is already open; its window was brought to the front.
         return;
     }
+    roshan_platform::update::clean_up();
 
     // Keep an enabled sign-in entry pointing at this copy of Roshan.
     roshan_platform::refresh_start_at_login();

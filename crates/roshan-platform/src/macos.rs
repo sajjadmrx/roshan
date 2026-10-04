@@ -255,7 +255,7 @@ pub fn set_start_at_login(enabled: bool, exe: &Path) -> Result<(), String> {
     fs::write(&path, plist).map_err(|e| e.to_string())
 }
 
-pub fn claim_single_instance() -> bool {
+pub fn claim_single_instance(_focus_existing: bool) -> bool {
     // LaunchServices already keeps a bundled app to one instance.
     true
 }

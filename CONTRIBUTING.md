@@ -74,8 +74,9 @@ A few rules every change has to respect:
 - **Real data only.** Roshan never shows made-up apps, demo entries or
   bundled third-party icons. App names and icons always come from the user's
   own system. Test fixtures stay inside tests.
-- **Offline and private.** No network requests, no accounts, no telemetry,
-  no analytics.
+- **Private.** No accounts, no telemetry, no analytics. The only network
+  request Roshan makes is the update check (GitHub's latest-release API and,
+  on Windows, the release files). Do not add any other.
 - **Honest status.** The interface never claims something worked when it did
   not, and never claims an app is "ready" when Roshan cannot know that.
 - **Light by design.** Nothing runs in the background, and nothing scans the

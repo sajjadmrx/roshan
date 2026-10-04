@@ -7,7 +7,7 @@ contribution rules in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## What Roshan is
 
-A small, offline desktop utility (Rust + GPUI). Users save **sessions**
+A small, private desktop utility (Rust + GPUI). Users save **sessions**
 ("Morning", "Deep work"…): ordered lists of real apps, shell commands and
 links. Pressing **Run** launches them one by one, with an optional pause after
 each item. Roshan opens at sign-in (can be turned off) and waits idle, so the
@@ -21,8 +21,10 @@ platform or tracker. Reject features that push it in those directions.
 - **Real data only.** Never add demo entries, a built-in app catalog,
   hardcoded app names, or bundled third-party icons. App names and icons come
   from the OS at runtime. Test fixtures stay inside `#[cfg(test)]`.
-- **Offline and private.** No network requests, accounts, telemetry or
-  analytics.
+- **Private.** No accounts, telemetry or analytics. The update check in
+  `roshan-platform/src/update.rs` is the **only** network access: GitHub's
+  latest-release API plus, on Windows, the release's `.exe` and
+  `SHA256SUMS.txt`. No user data is sent. Do not add other requests.
 - **Honest status.** Report only what the OS told us: `Launched`, `Failed`
   (with the OS reason) or `Skipped`. Never claim an app is "running" or
   "ready".
@@ -42,6 +44,7 @@ crates/
     model.rs          Session, LaunchItem, ItemKind, AppTarget
     config.rs         load/save (atomic), schema, normalization
     engine.rs         sequential runner, RunEvent, CancelToken, Launcher trait
+    version.rs        release versions and their ordering
   roshan-platform/    OS integration behind one facade (lib.rs).
     windows.rs        AppsFolder discovery, IShellItemImageFactory icons,
                       ShellExecuteEx launch, registry start-at-login,
@@ -53,11 +56,13 @@ crates/
     unix.rs           shared macOS/Linux helpers
     icon_cache.rs     on-disk PNG/SVG icon cache
     open_target.rs    URL/path classification, allowed URL schemes
+    update.rs         GitHub release check, verified download, Windows
+                      self-replace (rename running exe, copy, restart)
   roshan/             The GPUI app.
-    main.rs           args (--run, --startup, --version), window setup
+    main.rs           args (--run, --startup, --updated, --version), window setup
     app.rs            all state and behavior (Roshan struct)
     view.rs           root view, title bar, overlays host
-    screens/          welcome, sessions list, session, settings
+    screens/          welcome, sessions list, session, settings, updates
     overlays/         add picker, item editor, dialogs, sheet helpers
     ui.rs             shared widgets (buttons, segmented, tiles, logo)
     theme.rs          palette (light/dark) and component theme sync
@@ -94,7 +99,10 @@ cargo clippy -p roshan-core -p roshan-platform --target aarch64-apple-darwin --a
 cargo clippy -p roshan-core -p roshan-platform --target x86_64-unknown-linux-gnu --all-targets -- -D warnings
 ```
 
-The full GPUI app cannot be cross-compiled; CI builds it on real runners.
+Cross-checking needs a C cross compiler for the target, because the HTTPS
+stack (`ring`) builds C code. Without one, rely on CI: the Linux job compiles
+and lints all non-Windows code natively. The full GPUI app cannot be
+cross-compiled either.
 
 ## Testing the UI safely
 
@@ -105,6 +113,11 @@ The full GPUI app cannot be cross-compiled; CI builds it on real runners.
 - Finishing the welcome screen enables start-at-login
   (`HKCU\...\CurrentVersion\Run`, value `Roshan`). Remove that entry after
   testing with a debug build.
+- Test updates against a local fake release: serve a `release.json` shaped
+  like GitHub's API (plus the `.exe` and `SHA256SUMS.txt`) and set
+  `ROSHAN_UPDATE_URL=http://127.0.0.1:<port>/release.json`. Run a **copy** of
+  the exe from a scratch folder, since updating replaces the running file.
+  Downloads land in `%LOCALAPPDATA%\Roshan\updates`.
 - Running a session really launches apps. Prefer harmless targets
   (Calculator, Notepad, `echo`) and close what you opened.
 

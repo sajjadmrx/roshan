@@ -12,11 +12,13 @@ use gpui_kit::{
     App, AppContext, Context, Entity, FocusHandle, Focusable, Image, ImageFormat, SharedString,
     Subscription, Task, Window,
 };
+use roshan_core::Version;
 use roshan_core::engine::{self, ItemStatus};
 use roshan_core::{
     AppTarget, CancelToken, Config, ItemKind, LaunchItem, MAX_WAIT_SECS, RunEvent, RunSummary,
     Session, ThemePreference,
 };
+use roshan_platform::update::Release;
 use roshan_platform::{DiscoveredApp, IconFormat, SystemLauncher};
 
 use crate::i18n::{self, I18n};
@@ -54,6 +56,38 @@ pub enum IconSlot {
     Loading,
     Ready(Arc<Image>),
     Missing,
+}
+
+/// Where the update check stands. Shown in Settings and, when there is
+/// something to act on, as a notice on the home screen.
+#[derive(Clone)]
+pub enum UpdateState {
+    Idle,
+    Checking,
+    UpToDate,
+    /// Newer release; this system updates by hand from the release page.
+    Available(Release),
+    Downloading(Version),
+    /// Downloaded and verified; installs on restart.
+    Ready {
+        version: Version,
+        path: PathBuf,
+    },
+    Failed(String),
+}
+
+/// Automatic checks run at most this often.
+const UPDATE_INTERVAL: Duration = Duration::from_secs(24 * 60 * 60);
+
+fn now_secs() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+}
+
+pub fn current_version() -> Version {
+    Version::parse(env!("CARGO_PKG_VERSION")).expect("the package version is valid")
 }
 
 pub struct RunState {
@@ -113,6 +147,8 @@ pub struct Roshan {
     pub cmd_terminal: bool,
     /// Mirrors the OS setting; see `roshan_platform::start_at_login`.
     pub start_at_login: bool,
+    pub update: UpdateState,
+    update_task: Option<Task<()>>,
     pub open_error: bool,
     pub inputs: Inputs,
     pub font_family: SharedString,
@@ -220,6 +256,8 @@ impl Roshan {
             renaming: false,
             cmd_terminal: true,
             start_at_login: roshan_platform::start_at_login(),
+            update: UpdateState::Idle,
+            update_task: None,
             open_error: false,
             inputs,
             font_family: SharedString::default(),
@@ -227,6 +265,7 @@ impl Roshan {
             _subscriptions: subscriptions,
         };
         this.apply_language(window, cx);
+        this.schedule_update_check(cx);
         if let Some(backup) = broken_backup {
             let i = cx.global::<I18n>();
             this.notice = Some(
@@ -350,6 +389,132 @@ impl Roshan {
         // Roshan starts with the computer by default; Settings can turn it off.
         self.set_start_at_login(true, cx);
         self.go(Screen::Sessions, window, cx);
+    }
+
+    // --------------------------------------------------------------- updates
+
+    /// Runs the daily automatic check a little after startup, once no
+    /// session is running.
+    fn schedule_update_check(&mut self, cx: &mut Context<Self>) {
+        let settings = &self.config.settings;
+        let due = settings
+            .last_update_check
+            .is_none_or(|last| now_secs().saturating_sub(last) >= UPDATE_INTERVAL.as_secs());
+        if !settings.check_updates || !due {
+            return;
+        }
+        self.update_task = Some(cx.spawn(async move |this, cx| {
+            cx.background_executor().timer(Duration::from_secs(8)).await;
+            loop {
+                let busy = this
+                    .update(cx, |this, _| this.any_running())
+                    .unwrap_or(true);
+                if !busy {
+                    break;
+                }
+                cx.background_executor()
+                    .timer(Duration::from_secs(30))
+                    .await;
+            }
+            let _ = this.update(cx, |this, cx| this.check_for_updates(cx));
+        }));
+    }
+
+    pub fn set_check_updates(&mut self, enabled: bool, cx: &mut Context<Self>) {
+        self.config.settings.check_updates = enabled;
+        self.save(cx);
+        if enabled {
+            self.schedule_update_check(cx);
+        }
+    }
+
+    pub fn check_for_updates(&mut self, cx: &mut Context<Self>) {
+        if matches!(
+            self.update,
+            UpdateState::Checking | UpdateState::Downloading(_) | UpdateState::Ready { .. }
+        ) {
+            return;
+        }
+        self.update = UpdateState::Checking;
+        cx.notify();
+        self.update_task = Some(cx.spawn(async move |this, cx| {
+            let found = cx
+                .background_executor()
+                .spawn(async { roshan_platform::update::latest_release() })
+                .await;
+            let release = match found {
+                Ok(release) => release,
+                Err(err) => {
+                    let _ = this.update(cx, |this, cx| {
+                        this.update = UpdateState::Failed(err);
+                        cx.notify();
+                    });
+                    return;
+                }
+            };
+            let newer = release.version > current_version();
+            let installable = newer && release.installable();
+            let _ = this.update(cx, |this, cx| {
+                this.config.settings.last_update_check = Some(now_secs());
+                this.save(cx);
+                this.update = match (newer, installable) {
+                    (false, _) => UpdateState::UpToDate,
+                    (true, false) => UpdateState::Available(release.clone()),
+                    (true, true) => UpdateState::Downloading(release.version.clone()),
+                };
+                cx.notify();
+            });
+            if !installable {
+                return;
+            }
+            let downloaded = cx
+                .background_executor()
+                .spawn({
+                    let release = release.clone();
+                    async move { roshan_platform::update::download(&release) }
+                })
+                .await;
+            let _ = this.update(cx, |this, cx| {
+                this.update = match downloaded {
+                    Ok(path) => UpdateState::Ready {
+                        version: release.version.clone(),
+                        path,
+                    },
+                    // Downloading failed: fall back to the manual way.
+                    Err(_) => UpdateState::Available(release.clone()),
+                };
+                cx.notify();
+            });
+        }));
+    }
+
+    /// Installs a downloaded update and restarts into it.
+    pub fn restart_to_update(&mut self, cx: &mut Context<Self>) {
+        let UpdateState::Ready { path, .. } = &self.update else {
+            return;
+        };
+        if self.any_running() {
+            self.notice = Some(i18n::t(cx, "update.busy"));
+            cx.notify();
+            return;
+        }
+        match roshan_platform::update::install_and_restart(path) {
+            Ok(()) => cx.quit(),
+            Err(err) => {
+                self.notice =
+                    Some(format!("{}\n{err}", i18n::t(cx, "update.install_failed")).into());
+                self.update = UpdateState::Failed(err);
+                cx.notify();
+            }
+        }
+    }
+
+    pub fn open_release_page(&mut self, cx: &mut Context<Self>) {
+        let page = match &self.update {
+            UpdateState::Available(release) => release.page.clone(),
+            _ => roshan_platform::update::RELEASES_PAGE.to_owned(),
+        };
+        cx.open_url(&page);
     }
 
     pub fn set_start_at_login(&mut self, enabled: bool, cx: &mut Context<Self>) {
@@ -1006,9 +1171,29 @@ fn command_title(line: &str) -> String {
     if line.chars().count() <= 24 {
         return line.to_owned();
     }
-    let first = line.split_whitespace().next().unwrap_or(line);
-    let first = first.trim_matches(['"', '\'']);
-    roshan_platform::name_for_path(std::path::Path::new(first))
+    let line = line.trim();
+    // The program is the first word, or the whole quoted part if quoted.
+    let program = match line.chars().next() {
+        Some(q @ ('"' | '\'')) => line[1..].split(q).next().unwrap_or_default(),
+        _ => line.split_whitespace().next().unwrap_or(line),
+    };
+    // Split on both separators: a Windows path is not a path on Linux.
+    let file = program.rsplit(['/', '\\']).next().unwrap_or(program);
+    let stem = match file.rsplit_once('.') {
+        Some((stem, ext))
+            if !stem.is_empty()
+                && ["exe", "cmd", "bat", "ps1", "sh", "py"]
+                    .contains(&ext.to_ascii_lowercase().as_str()) =>
+        {
+            stem
+        }
+        _ => file,
+    };
+    if stem.is_empty() {
+        line.to_owned()
+    } else {
+        stem.to_owned()
+    }
 }
 
 fn open_title(target: &roshan_platform::OpenTarget) -> String {
@@ -1064,6 +1249,14 @@ mod tests {
         assert_eq!(
             command_title("\"C:\\Tools\\srv.exe\" --port 8080 --verbose"),
             "srv"
+        );
+        assert_eq!(
+            command_title("\"C:\\Program Files\\Tool\\run.cmd\" --all --things"),
+            "run"
+        );
+        assert_eq!(
+            command_title("/usr/local/bin/server.sh --port 8080 --verbose"),
+            "server"
         );
         assert_eq!(
             open_title(&roshan_platform::OpenTarget::Url(

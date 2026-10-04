@@ -33,7 +33,7 @@ impl Default for Config {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
     /// UI language code (e.g. "en", "fa"). `None` until the user picked one,
@@ -47,6 +47,24 @@ pub struct Settings {
     /// Ignored on Windows and macOS.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub terminal: Option<String>,
+    /// Look for a new version on GitHub, at most once a day.
+    pub check_updates: bool,
+    /// When the last automatic update check ran (seconds since the epoch).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_update_check: Option<u64>,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            language: None,
+            theme: ThemePreference::default(),
+            close_after_run: false,
+            terminal: None,
+            check_updates: true,
+            last_update_check: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -215,6 +233,8 @@ mod tests {
                 theme: ThemePreference::Dark,
                 close_after_run: true,
                 terminal: None,
+                check_updates: false,
+                last_update_check: Some(1_700_000_000),
             },
             sessions: vec![session],
         }
@@ -238,6 +258,25 @@ mod tests {
         // Saving again replaces the file in place.
         config.save(&path).unwrap();
         assert!(!path.with_extension("toml.tmp").exists());
+    }
+
+    #[test]
+    fn update_checks_are_on_unless_turned_off() {
+        let config = Config::parse(
+            "schema = 1
+",
+            Path::new("x"),
+        )
+        .unwrap();
+        assert!(config.settings.check_updates);
+        let off = Config::parse(
+            "schema = 1
+[settings]
+check_updates = false
+",
+            Path::new("x"),
+        );
+        assert!(!off.unwrap().settings.check_updates);
     }
 
     #[test]
